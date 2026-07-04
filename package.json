@@ -1,0 +1,32 @@
+{
+  "name": "@graelo/pi-defer-modal",
+  "version": "0.1.0",
+  "description": "Defer modal dialogs while the user is typing to prevent interruption",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typescript": "^6.0.3"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "modal",
+    "dialog",
+    "typing",
+    "defer",
+    "non-interrupting"
+  ],
+  "author": "",
+  "license": "MIT"
+}
