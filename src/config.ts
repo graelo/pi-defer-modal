@@ -89,9 +89,11 @@ function getConfigPaths(): string[] {
   const projectPath = resolve(process.cwd(), ".pi", "extensions", EXTENSION_ID, CONFIG_FILENAME);
   paths.push(projectPath);
   
-  // 2. Global: ~/.pi/agent/extensions/pi-defer-modal/config.json
+  // 2. Global: $PI_CODING_AGENT_DIR/extensions/pi-defer-modal/config.json or ~/.pi/agent/extensions/pi-defer-modal/config.json
+  const piAgentDir = process.env.PI_CODING_AGENT_DIR;
   const home = homedir() || process.env.HOME || "/";
-  const globalPath = resolve(home, ".pi", "agent", "extensions", EXTENSION_ID, CONFIG_FILENAME);
+  const globalBase = piAgentDir || resolve(home, ".pi", "agent");
+  const globalPath = resolve(globalBase, "extensions", EXTENSION_ID, CONFIG_FILENAME);
   paths.push(globalPath);
   
   return paths;
