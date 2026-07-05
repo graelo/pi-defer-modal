@@ -1,9 +1,13 @@
 {
   "name": "@graelo/pi-defer-modal",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Defer modal dialogs while the user is typing to prevent interruption",
   "type": "module",
   "main": "src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/graelo/pi-defer-modal.git"
+  },
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit"
@@ -27,6 +31,10 @@
     "defer",
     "non-interrupting"
   ],
-  "author": "",
+  "author": "graelo",
+  "homepage": "https://github.com/graelo/pi-defer-modal#readme",
+  "bugs": {
+    "url": "https://github.com/graelo/pi-defer-modal/issues"
+  },
   "license": "MIT"
 }
