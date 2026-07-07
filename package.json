@@ -1,6 +1,6 @@
 {
   "name": "@graelo/pi-defer-modal",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Defer modal dialogs while the user is typing to prevent interruption",
   "type": "module",
   "main": "src/index.ts",
