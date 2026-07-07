@@ -1,6 +1,6 @@
 /**
  * TypingTracker - tracks user typing activity to defer modals appropriately.
- * 
+ *
  * This is a generic version that can be used to defer any modal dialog,
  * not just permission prompts.
  */
@@ -123,13 +123,13 @@ export class TypingTracker {
 
     this.takeSubmitted(); // clear any stale submit from a prior wait
     const startedAt = this.now();
-    
+
     if (config.showStatusIndicator) {
       this.setPendingStatus(ctx, config.statusText);
     }
-    
+
     try {
-      for (;;) {
+      for (; ;) {
         if (this.takeSubmitted()) return;
         if (this.isEditorEmpty(ctx)) return;
         const sinceInput = this.now() - this.lastInputAt;

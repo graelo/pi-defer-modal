@@ -1,10 +1,10 @@
 /**
  * pi-defer-modal extension
- * 
+ *
  * Defers modal dialogs (select, confirm, input) while the user is actively typing,
  * preventing interruption of the user's workflow. Once the user pauses typing
  * or submits their input, the deferred modals appear.
- * 
+ *
  * This extension works transparently with any other extension that uses
  * ctx.ui.select(), ctx.ui.confirm(), or ctx.ui.input().
  */
@@ -54,6 +54,18 @@ class DeferredUI {
   private readonly typingTracker: TypingTracker;
   private readonly config: ConfigStore;
 
+  /**
+   * Serializes all wrapped modals so at most one is ever in flight — whether
+   * deferred (waiting for a typing pause) or shown. Pi presents extension
+   * modals through a single slot and relies on a shown modal grabbing focus to
+   * block further input; deferring a modal breaks that (a parked modal holds no
+   * focus), letting a second modal start and clobber the slot. Chaining every
+   * call restores the one-at-a-time invariant: e.g. a subagent permission prompt
+   * deferred while you type `/subagents:sessions` now resolves fully before the
+   * session picker mounts, instead of the two racing for the slot.
+   */
+  private modalChain: Promise<unknown> = Promise.resolve();
+
   constructor(
     original: OriginalUIMethods,
     typingTracker: TypingTracker,
@@ -65,46 +77,65 @@ class DeferredUI {
   }
 
   /**
+   * Run `task` only after every previously-issued modal has fully settled. A
+   * rejection is surfaced to that call's own caller but never poisons the chain.
+   */
+  private serialize<T>(task: () => Promise<T>): Promise<T> {
+    const result = this.modalChain.then(task, task);
+    this.modalChain = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
+  /**
    * Wrap the select method to defer while typing if configured.
    */
-  async select(
+  select(
     title: string,
     options: string[],
     opts?: ExtensionUIDialogOptions,
   ): Promise<string | undefined> {
-    if (this.shouldDefer("select")) {
-      await this.typingTracker.waitForQuiet();
-    }
-    return this.original.select?.(title, options, opts);
+    return this.serialize(async () => {
+      if (this.shouldDefer("select")) {
+        await this.typingTracker.waitForQuiet();
+      }
+      return this.original.select?.(title, options, opts);
+    });
   }
 
   /**
    * Wrap the confirm method to defer while typing if configured.
    */
-  async confirm(
+  confirm(
     title: string,
     message: string,
     opts?: ExtensionUIDialogOptions,
   ): Promise<boolean> {
-    if (this.shouldDefer("confirm")) {
-      await this.typingTracker.waitForQuiet();
-    }
-    // confirm should always return boolean, not undefined
-    return this.original.confirm?.(title, message, opts) ?? false;
+    return this.serialize(async () => {
+      if (this.shouldDefer("confirm")) {
+        await this.typingTracker.waitForQuiet();
+      }
+      // confirm should always return boolean, not undefined
+      return (await this.original.confirm?.(title, message, opts)) ?? false;
+    });
   }
 
   /**
    * Wrap the input method to defer while typing if configured.
    */
-  async input(
+  input(
     title: string,
     placeholder?: string,
     opts?: ExtensionUIDialogOptions,
   ): Promise<string | undefined> {
-    if (this.shouldDefer("input")) {
-      await this.typingTracker.waitForQuiet();
-    }
-    return this.original.input?.(title, placeholder, opts);
+    return this.serialize(async () => {
+      if (this.shouldDefer("input")) {
+        await this.typingTracker.waitForQuiet();
+      }
+      return this.original.input?.(title, placeholder, opts);
+    });
   }
 
   /**
@@ -177,13 +208,13 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
   // 1. Load config from a config file
   // 2. Provide a command to update config
   // 3. Watch for config file changes
-  
+
   // Register a command to toggle the extension
   pi.registerCommand("defer-modal-toggle", {
     description: "Toggle modal deferral on/off",
     handler: async (args: string, ctx: ExtensionContext) => {
       const currentConfig = config.current();
-      config.update({ enabled: !currentConfig.enabled }); 
+      config.update({ enabled: !currentConfig.enabled });
       const newConfig = config.current();
       console.info(
         `[${EXTENSION_ID}] Modal deferral ${newConfig.enabled ? "enabled" : "disabled"}`,
