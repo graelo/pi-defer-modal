@@ -38,12 +38,32 @@ type UIInput = (
 ) => Promise<string | undefined>;
 
 /**
+ * ctx.ui.custom<T>(factory, opts?) — used by extensions (e.g. pi-permission-system
+ * in TUI mode) to render an inline keybind dialog.
+ *
+ * The factory signature: (tui, theme, keybindings, done) => Component | Promise<Component>,
+ * where `done` is called with the final value when the component commits.
+ * `opts.overlay` controls whether the component renders as an overlay or
+ * inline (false = inline, which is what pi-permission-system uses).
+ *
+ * Note: we use a permissive type here rather than matching the SDK's exact
+ * `Component` interface (which pulls in `@earendil-works/pi-tui` internals).
+ * The wrapper only needs to forward the call — it never inspects the factory
+ * or its return value.
+ */
+type UICustom = <T>(
+  factory: (...args: unknown[]) => unknown,
+  opts?: { overlay?: boolean },
+) => Promise<T>;
+
+/**
  * Original UI methods that we'll wrap and restore.
  */
 interface OriginalUIMethods {
   select?: UISelect;
   confirm?: UIConfirm;
   input?: UIInput;
+  custom?: UICustom;
 }
 
 /**
@@ -139,6 +159,29 @@ class DeferredUI {
   }
 
   /**
+   * Wrap the custom method to defer while typing if configured.
+   *
+   * pi-permission-system uses ctx.ui.custom() for its inline permission
+   * dialog in TUI mode. Without this wrapper, permission prompts would
+   * interrupt active typing just like un-wrapped select/confirm/input.
+   */
+  custom<T>(
+    factory: (...args: unknown[]) => unknown,
+    opts?: { overlay?: boolean },
+  ): Promise<T> {
+    return this.serialize(async () => {
+      if (this.shouldDefer("custom")) {
+        await this.typingTracker.waitForQuiet();
+      }
+      const result = await (this.original.custom as ((
+        factory: (...args: unknown[]) => unknown,
+        opts?: { overlay?: boolean },
+      ) => Promise<T>) | undefined)?.(factory, opts);
+      return result as T;
+    });
+  }
+
+  /**
    * Check if a modal type should be deferred based on configuration.
    */
   private shouldDefer(modalType: string): boolean {
@@ -176,6 +219,7 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
     originalUI.select = ctx.ui.select?.bind(ctx.ui);
     originalUI.confirm = ctx.ui.confirm?.bind(ctx.ui);
     originalUI.input = ctx.ui.input?.bind(ctx.ui);
+    originalUI.custom = ctx.ui.custom?.bind(ctx.ui) as UICustom | undefined;
 
     // Create deferred UI wrapper
     const deferredUI = new DeferredUI(originalUI, typingTracker, config);
@@ -184,6 +228,7 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
     ctx.ui.select = deferredUI.select.bind(deferredUI);
     ctx.ui.confirm = deferredUI.confirm.bind(deferredUI);
     ctx.ui.input = deferredUI.input.bind(deferredUI);
+    ctx.ui.custom = deferredUI.custom.bind(deferredUI) as typeof ctx.ui.custom;
 
     isPatched = true;
     typingTracker.start(ctx);

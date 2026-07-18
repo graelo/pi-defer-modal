@@ -19,7 +19,7 @@ export interface DeferModalConfig {
 
   /**
    * Modal types to defer while typing.
-   * Supported types: "select", "confirm", "input"
+   * Supported types: "select", "confirm", "input", "custom"
    */
   modalTypes: string[];
 
@@ -56,7 +56,7 @@ export interface DeferModalConfig {
  */
 export const DEFAULT_CONFIG: DeferModalConfig = {
   enabled: false,
-  modalTypes: ["select", "confirm", "input"],
+  modalTypes: ["select", "confirm", "input", "custom"],
   quietMs: 1500,
   maxDeferMs: 30_000,
   showStatusIndicator: true,

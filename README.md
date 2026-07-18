@@ -13,7 +13,7 @@ This extension intercepts modal calls from any extension and defers them until y
 ## Features
 
 - **Non-interrupting modals**: Modals wait until you pause typing before appearing
-- **Configurable modal types**: Choose which modal types to defer (select, confirm, input)
+- **Configurable modal types**: Choose which modal types to defer (select, confirm, input, custom)
 - **Adjustable timing**: Configure how long to wait after your last keystroke
 - **Safety ceiling**: Maximum deferral time prevents tools from hanging indefinitely
 - **Status indicator**: Optional visual indicator when modals are being deferred
@@ -41,7 +41,7 @@ Create a `config.json` file in the extension directory:
 ```json
 {
   "enabled": true,
-  "modalTypes": ["select", "confirm", "input"],
+  "modalTypes": ["select", "confirm", "input", "custom"],
   "quietMs": 1500,
   "maxDeferMs": 30000,
   "showStatusIndicator": true,
@@ -54,7 +54,7 @@ Create a `config.json` file in the extension directory:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enabled` | boolean | `false` | Enable or disable modal deferral |
-| `modalTypes` | string[] | `["select", "confirm", "input"]` | Which modal types to defer |
+| `modalTypes` | string[] | `["select", "confirm", "input", "custom"]` | Which modal types to defer |
 | `quietMs` | number | `1500` | Milliseconds of inactivity before showing deferred modals |
 | `maxDeferMs` | number | `30000` | Maximum time to defer a modal (prevents hanging) |
 | `showStatusIndicator` | boolean | `true` | Show a status indicator when modals are deferred |
@@ -112,6 +112,10 @@ With this extension enabled:
 3. Instead of interrupting you, the modal waits
 4. You finish typing and pause for 1.5 seconds (default `quietMs`)
 5. The permission modal appears, ready for your input
+
+### `custom` modal type
+
+The `custom` type covers inline keybind dialogs rendered via `ctx.ui.custom()`. This is the method used by `pi-permission-system` for its permission prompts in TUI mode. Without wrapping `custom`, those prompts would interrupt your typing just like un-wrapped `select`/`confirm`/`input` would.
 
 ## Compatibility
 
