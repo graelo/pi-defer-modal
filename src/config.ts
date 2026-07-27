@@ -5,7 +5,7 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, dirname } from "node:path";
 
 /**
  * Configuration options for modal deferral behavior.
@@ -79,43 +79,70 @@ export const STATUS_KEY = `${EXTENSION_ID}:modal-pending`;
 export const CONFIG_FILENAME = "config.json";
 
 /**
- * Configuration file locations to check, in order of priority.
- * Later entries override earlier ones.
+ * Find the root of the current git repository, if any.
+ *
+ * `.git` is a directory in a normal clone, but a file in worktrees and
+ * submodules, so mere existence is what marks the root.
+ */
+function findGitRoot(startPath: string): string | null {
+  let current = resolve(startPath);
+  const root = resolve("/");
+
+  while (current !== root) {
+    const gitDir = join(current, ".git");
+    if (existsSync(gitDir)) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return null;
+}
+
+/**
+ * Resolves config file paths with priority: repo-root -> pi_coding_agent_dir -> home
  */
 function getConfigPaths(): string[] {
   const paths: string[] = [];
   
-  // 1. Project-local: .pi/extensions/pi-defer-modal/config.json
-  const projectPath = resolve(process.cwd(), ".pi", "extensions", EXTENSION_ID, CONFIG_FILENAME);
-  paths.push(projectPath);
+  // 1. Repository root (project-local)
+  const gitRoot = findGitRoot(process.cwd());
+  if (gitRoot) {
+    const repoPath = resolve(gitRoot, ".pi", "extensions", EXTENSION_ID, CONFIG_FILENAME);
+    paths.push(repoPath);
+  }
   
-  // 2. Global: $PI_CODING_AGENT_DIR/extensions/pi-defer-modal/config.json or ~/.pi/agent/extensions/pi-defer-modal/config.json
+  // 2. PI_CODING_AGENT_DIR
   const piAgentDir = process.env.PI_CODING_AGENT_DIR;
+  if (piAgentDir) {
+    const agentPath = resolve(piAgentDir, "extensions", EXTENSION_ID, CONFIG_FILENAME);
+    paths.push(agentPath);
+  }
+  
+  // 3. HOME
   const home = homedir() || process.env.HOME || "/";
-  const globalBase = piAgentDir || resolve(home, ".pi", "agent");
-  const globalPath = resolve(globalBase, "extensions", EXTENSION_ID, CONFIG_FILENAME);
-  paths.push(globalPath);
+  const homePath = resolve(home, ".pi", "agent", "extensions", EXTENSION_ID, CONFIG_FILENAME);
+  paths.push(homePath);
   
   return paths;
 }
 
 /**
- * Load configuration from file, merging with defaults.
- * Later files override earlier ones.
+ * Load configuration from file, returning the first valid config found.
+ * Falls back to defaults if no config file is found.
  */
 export function loadConfig(): DeferModalConfig {
-  const config: Partial<DeferModalConfig> = {};
   const paths = getConfigPaths();
   
-  // Load from all available config files, later ones override earlier
+  // Load from the first available config file
   for (const configPath of paths) {
     if (existsSync(configPath)) {
       try {
         const content = readFileSync(configPath, "utf-8");
         const fileConfig = JSON.parse(content) as Partial<DeferModalConfig>;
-        // Merge: file config overrides current config
-        Object.assign(config, fileConfig);
         console.info(`[${EXTENSION_ID}] Loaded config from ${configPath}`);
+        return { ...DEFAULT_CONFIG, ...fileConfig };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[${EXTENSION_ID}] Failed to load config from ${configPath}: ${msg}`);
@@ -123,8 +150,9 @@ export function loadConfig(): DeferModalConfig {
     }
   }
   
-  // Merge with defaults and return
-  return { ...DEFAULT_CONFIG, ...config };
+  // No config file found, return defaults
+  console.info(`[${EXTENSION_ID}] No config file found, using defaults`);
+  return { ...DEFAULT_CONFIG };
 }
 
 /**

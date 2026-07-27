@@ -70,10 +70,13 @@ Create a `config.json` file in the extension directory:
 
 ### Configuration Locations
 
-The extension checks for configuration in these locations (in order of priority):
+The extension checks for configuration in these locations (in order of priority, first found wins):
 
-1. Project-local: `.pi/extensions/pi-defer-modal/config.json`
-2. Global: `~/.pi/agent/extensions/pi-defer-modal/config.json`
+1. **Repository root**: `<git-root>/.pi/extensions/pi-defer-modal/config.json`
+2. **PI agent directory**: `$PI_CODING_AGENT_DIR/extensions/pi-defer-modal/config.json`
+3. **Home directory**: `~/.pi/agent/extensions/pi-defer-modal/config.json`
+
+The git root is found by walking up from the current working directory until a `.git` directory is encountered. This means the config will be found regardless of which subdirectory of your repository you run Pi from.
 
 ## Commands
 
