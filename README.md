@@ -70,13 +70,12 @@ Create a `config.json` file in the extension directory:
 
 ### Configuration Locations
 
-The extension checks for configuration in these locations (in order of priority, first found wins):
+Configuration is resolved by [`@graelo/pi-ext-config`](https://www.npmjs.com/package/@graelo/pi-ext-config), which checks these locations in order of priority (first found wins):
 
 1. **Repository root**: `<git-root>/.pi/extensions/pi-defer-modal/config.json`
-2. **PI agent directory**: `$PI_CODING_AGENT_DIR/extensions/pi-defer-modal/config.json`
-3. **Home directory**: `~/.pi/agent/extensions/pi-defer-modal/config.json`
+2. **Agent directory**: `<agent-dir>/extensions/pi-defer-modal/config.json`
 
-The git root is found by walking up from the current working directory until a `.git` directory is encountered. This means the config will be found regardless of which subdirectory of your repository you run Pi from.
+The git root is found by walking up from the current working directory until a `.git` marker is encountered (a directory in a normal clone, a file in worktrees and submodules). This means the config will be found regardless of which subdirectory of your repository you run Pi from. The agent directory defaults to Pi's own `getAgentDir()`, which honors `PI_CODING_AGENT_DIR` and expands a leading `~`.
 
 ## Commands
 
@@ -147,11 +146,8 @@ just like un-wrapped `select`/`confirm`/`input` would.
 # Install dependencies
 pnpm install
 
-# Type check
+# Type check (there is no build step: Pi loads src/index.ts directly)
 pnpm run check
-
-# Build
-pnpm run build
 ```
 
 ## License
