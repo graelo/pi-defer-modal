@@ -4,16 +4,22 @@
   "description": "Defer modal dialogs while the user is typing to prevent interruption",
   "type": "module",
   "main": "src/index.ts",
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/graelo/pi-defer-modal.git"
   },
   "scripts": {
-    "build": "tsc",
     "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@graelo/pi-ext-config": "^0.1.0"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "*",
+    "@types/node": "^22",
     "typescript": "^6.0.3"
   },
   "pi": {
@@ -35,6 +41,9 @@
   "homepage": "https://github.com/graelo/pi-defer-modal#readme",
   "bugs": {
     "url": "https://github.com/graelo/pi-defer-modal/issues"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "license": "MIT"
 }
