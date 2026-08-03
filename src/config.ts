@@ -50,6 +50,12 @@ export interface DeferModalConfig {
    * Default: "⏸ modal pending — pause to review"
    */
   statusText: string;
+
+  /**
+   * Show diagnostic notifications for extension lifecycle and configuration.
+   * Default: false
+   */
+  debug: boolean;
 }
 
 /**
@@ -62,6 +68,7 @@ export const DEFAULT_CONFIG: DeferModalConfig = {
   maxDeferMs: 30_000,
   showStatusIndicator: true,
   statusText: "⏸ modal pending — pause to review",
+  debug: false,
 };
 
 /**
@@ -75,31 +82,55 @@ export const EXTENSION_ID = "pi-defer-modal";
 export const STATUS_KEY = `${EXTENSION_ID}:modal-pending`;
 
 /**
+ * A debug notification collected while loading configuration.
+ */
+export interface ConfigDebugMessage {
+  message: string;
+  type: "info" | "warning";
+}
+
+/**
  * Load configuration from file, returning the first valid config found.
  * Falls back to defaults if no config file is found.
  *
  * Resolution (via `@graelo/pi-ext-config`, `"first-match"` strategy):
  * 1. `<git-root>/.pi/extensions/pi-defer-modal/config.json`
  * 2. `<agent-dir>/extensions/pi-defer-modal/config.json`
+ *
+ * Debug messages are collected for the caller to display when enabled.
  */
-export function loadConfig(options?: ConfigLocationOptions): DeferModalConfig {
+export function loadConfig(options?: ConfigLocationOptions): {
+  config: DeferModalConfig;
+  debugMessages: ConfigDebugMessage[];
+} {
   const { config, sources, diagnostics } = loadConfigFile<DeferModalConfig>(
     EXTENSION_ID,
     DEFAULT_CONFIG,
     { ...options, strategy: "first-match" },
   );
 
-  for (const problem of diagnostics) {
-    console.warn(`[${EXTENSION_ID}] ${problem}`);
+  if (!config.debug) {
+    return { config, debugMessages: [] };
   }
+
+  const debugMessages: ConfigDebugMessage[] = diagnostics.map((problem) => ({
+    message: `[${EXTENSION_ID}] ${problem}`,
+    type: "warning",
+  }));
 
   if (sources.length > 0) {
-    console.info(`[${EXTENSION_ID}] Loaded config from ${sources[sources.length - 1]}`);
+    debugMessages.push({
+      message: `[${EXTENSION_ID}] Loaded config from ${sources[sources.length - 1]}`,
+      type: "info",
+    });
   } else {
-    console.info(`[${EXTENSION_ID}] No config file found, using defaults`);
+    debugMessages.push({
+      message: `[${EXTENSION_ID}] No config file found, using defaults`,
+      type: "info",
+    });
   }
 
-  return config;
+  return { config, debugMessages };
 }
 
 /**
@@ -130,9 +161,10 @@ export class ConfigStore {
   /**
    * Reload configuration from file.
    */
-  reload(): void {
-    const loadedConfig = loadConfig();
-    this.config = loadedConfig;
+  reload(): ConfigDebugMessage[] {
+    const { config, debugMessages } = loadConfig();
+    this.config = config;
+    return debugMessages;
   }
 
   /**

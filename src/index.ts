@@ -15,7 +15,13 @@ import type {
   ExtensionUIDialogOptions,
 } from "@earendil-works/pi-coding-agent";
 
-import { ConfigStore, DEFAULT_CONFIG, EXTENSION_ID, loadConfig } from "./config";
+import {
+  ConfigStore,
+  type ConfigDebugMessage,
+  DEFAULT_CONFIG,
+  EXTENSION_ID,
+  loadConfig,
+} from "./config";
 import { TypingTracker } from "./typing-tracker";
 
 /**
@@ -195,8 +201,33 @@ class DeferredUI {
  */
 export default function piDeferModalExtension(pi: ExtensionAPI): void {
   // Load configuration from file and create store
-  const loadedConfig = loadConfig();
+  const { config: loadedConfig, debugMessages } = loadConfig();
   const config = new ConfigStore(loadedConfig);
+
+  /**
+   * Display a debug notification when debug mode is enabled.
+   */
+  const notifyDebug = (
+    ctx: ExtensionContext,
+    message: string,
+    type: "info" | "warning" = "info",
+  ): void => {
+    if (config.current().debug && ctx.hasUI) {
+      ctx.ui.notify(message, type);
+    }
+  };
+
+  /**
+   * Display collected configuration debug notifications.
+   */
+  const notifyDebugMessages = (
+    ctx: ExtensionContext,
+    messages: ConfigDebugMessage[],
+  ): void => {
+    for (const { message, type } of messages) {
+      notifyDebug(ctx, message, type);
+    }
+  };
 
   // Create typing tracker
   const typingTracker = new TypingTracker({ config });
@@ -233,14 +264,15 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
     isPatched = true;
     typingTracker.start(ctx);
 
-    console.info(`[${EXTENSION_ID}] Modal deferral extension activated`);
+    notifyDebugMessages(ctx, debugMessages);
+    notifyDebug(ctx, `[${EXTENSION_ID}] Modal deferral extension activated`);
   });
 
   // Clean up on session shutdown
-  pi.on("session_shutdown", () => {
+  pi.on("session_shutdown", (_event, ctx) => {
     typingTracker.stop();
     isPatched = false;
-    console.info(`[${EXTENSION_ID}] Modal deferral extension deactivated`);
+    notifyDebug(ctx, `[${EXTENSION_ID}] Modal deferral extension deactivated`);
   });
 
   // Notify the tracker when user submits input
@@ -261,9 +293,6 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
       const currentConfig = config.current();
       config.update({ enabled: !currentConfig.enabled });
       const newConfig = config.current();
-      console.info(
-        `[${EXTENSION_ID}] Modal deferral ${newConfig.enabled ? "enabled" : "disabled"}`,
-      );
       await ctx.ui.notify(
         `Modal deferral is now ${newConfig.enabled ? "enabled" : "disabled"}.`
       );
@@ -282,7 +311,8 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
         `  Quiet time: ${currentConfig.quietMs}ms\n` +
         `  Max defer: ${currentConfig.maxDeferMs}ms\n` +
         `  Show status: ${currentConfig.showStatusIndicator}\n` +
-        `  Status text: "${currentConfig.statusText}"`
+        `  Status text: "${currentConfig.statusText}"\n` +
+        `  Debug: ${currentConfig.debug}`
       );
     },
   });
@@ -291,9 +321,10 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
   pi.registerCommand("defer-modal-reload", {
     description: "Reload modal deferral configuration from file",
     handler: async (args: string, ctx: ExtensionContext) => {
-      config.reload();
+      const reloadedDebugMessages = config.reload();
       const currentConfig = config.current();
-      console.info(`[${EXTENSION_ID}] Configuration reloaded from file`);
+      notifyDebugMessages(ctx, reloadedDebugMessages);
+      notifyDebug(ctx, `[${EXTENSION_ID}] Configuration reloaded from file`);
       await ctx.ui.notify(
         `Configuration reloaded:\n` +
         `  Enabled: ${currentConfig.enabled}\n` +

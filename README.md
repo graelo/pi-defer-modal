@@ -53,7 +53,8 @@ Create a `config.json` file in the extension directory:
   "quietMs": 1500,
   "maxDeferMs": 30000,
   "showStatusIndicator": true,
-  "statusText": "⏸ modal pending — pause to review"
+  "statusText": "⏸ modal pending — pause to review",
+  "debug": false
 }
 ```
 
@@ -67,6 +68,7 @@ Create a `config.json` file in the extension directory:
 | `maxDeferMs` | number | `30000` | Maximum time to defer a modal (prevents hanging) |
 | `showStatusIndicator` | boolean | `true` | Show a status indicator when modals are deferred |
 | `statusText` | string | `"⏸ modal pending — pause to review"` | Text to show in the status indicator |
+| `debug` | boolean | `false` | Show extension diagnostic notifications |
 
 ### Configuration Locations
 
