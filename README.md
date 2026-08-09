@@ -19,13 +19,16 @@ should), but the UI presentation is delayed until you're ready.
 
 ## Features
 
-- **Non-interrupting modals**: Modals wait until you pause typing before appearing
+- **Non-interrupting modals**: Modals wait until you pause typing before
+    appearing
 - **Configurable modal types**: Choose which modal types to defer (select,
   confirm, input, custom)
 - **Adjustable timing**: Configure how long to wait after your last keystroke
-- **Safety ceiling**: Maximum deferral time prevents tools from hanging indefinitely
+- **Safety ceiling**: Maximum deferral time prevents tools from hanging
+    indefinitely
 - **Status indicator**: Optional visual indicator when modals are being deferred
-- **Works with any extension**: Transparently intercepts modals from all extensions
+- **Works with any extension**: Transparently intercepts modals from all
+    extensions
 
 ## Installation
 
@@ -72,12 +75,26 @@ Create a `config.json` file in the extension directory:
 
 ### Configuration Locations
 
-Configuration is resolved by [`@graelo/pi-ext-config`](https://www.npmjs.com/package/@graelo/pi-ext-config), which checks these locations in order of priority (first found wins):
+Configuration is resolved by
+[`@graelo/pi-ext-config@^0.2.0`](https://www.npmjs.com/package/@graelo/pi-ext-config),
+which checks these locations in order of priority (first found wins):
 
 1. **Repository root**: `<git-root>/.pi/extensions/pi-defer-modal/config.json`
+    (only when the project is trusted)
 2. **Agent directory**: `<agent-dir>/extensions/pi-defer-modal/config.json`
+    (always available)
 
-The git root is found by walking up from the current working directory until a `.git` marker is encountered (a directory in a normal clone, a file in worktrees and submodules). This means the config will be found regardless of which subdirectory of your repository you run Pi from. The agent directory defaults to Pi's own `getAgentDir()`, which honors `PI_CODING_AGENT_DIR` and expands a leading `~`.
+The git root is found by walking up from the current working directory until a
+`.git` marker is encountered (a directory in a normal clone, a file in worktrees
+and submodules). This means the config will be found regardless of which
+subdirectory of your repository you run Pi from. The agent directory defaults to
+Pi's own `getAgentDir()`, which honors `PI_CODING_AGENT_DIR` and expands a
+leading `~`.
+
+**Project Trust**: Project-tier configuration (location 1) is only considered
+when `ctx.isProjectTrusted()` returns `true`. This ensures that untrusted
+projects cannot override your global configuration. Global configuration remains
+available regardless of project trust status.
 
 ## Commands
 
@@ -139,6 +156,8 @@ just like un-wrapped `select`/`confirm`/`input` would.
 ## Compatibility
 
 - Works with Pi v0.2.0 and later
+- Requires `@graelo/pi-ext-config@^0.2.0` or later for trust-aware config
+    resolution
 - Compatible with all extensions that use standard UI modal methods
 - No changes required to existing extensions
 
@@ -150,6 +169,9 @@ pnpm install
 
 # Type check (there is no build step: Pi loads src/index.ts directly)
 pnpm run check
+
+# Tests
+pnpm test
 ```
 
 ## License

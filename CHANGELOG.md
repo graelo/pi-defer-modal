@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add trusted and untrusted project-context tests, including extension
+  lifecycle coverage for startup, session start, and shutdown.
+
+### Changed
+
+- Require `@graelo/pi-ext-config@^0.2.0` for trust-aware configuration
+  resolution.
+- Consider project-tier configuration only when Pi reports the project as
+  trusted via `ctx.isProjectTrusted()`; global configuration remains available
+  for trusted, untrusted, and pre-session contexts.
+- Load project-aware configuration during `session_start`, after a session
+  context exists, while loading global configuration at extension startup.
+- Reset project-derived configuration to the global configuration on session
+  shutdown.
+- Document project trust requirements and add the test command to the
+  development instructions.
+
 ## [0.1.4] - 2026-07-10
 
 ### Fixed
@@ -47,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   built-in defaults.
 - Commands: `/defer-modal-toggle`, `/defer-modal-config`, `/defer-modal-reload`.
 
+[Unreleased]: https://github.com/graelo/pi-defer-modal/compare/v0.1.4...HEAD
 [0.1.4]: https://github.com/graelo/pi-defer-modal/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/graelo/pi-defer-modal/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/graelo/pi-defer-modal/compare/v0.1.1...v0.1.2
