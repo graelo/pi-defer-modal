@@ -89,26 +89,19 @@ export interface ConfigDebugMessage {
   type: "info" | "warning";
 }
 
-/**
- * Load configuration from file, returning the first valid config found.
- * Falls back to defaults if no config file is found.
- *
- * Resolution (via `@graelo/pi-ext-config`, `"first-match"` strategy):
- * 1. `<git-root>/.pi/extensions/pi-defer-modal/config.json`
- * 2. `<agent-dir>/extensions/pi-defer-modal/config.json`
- *
- * Debug messages are collected for the caller to display when enabled.
- */
-export function loadConfig(options?: ConfigLocationOptions): {
+type ConfigLoadResult = {
   config: DeferModalConfig;
   debugMessages: ConfigDebugMessage[];
-} {
-  const { config, sources, diagnostics } = loadConfigFile<DeferModalConfig>(
-    EXTENSION_ID,
-    DEFAULT_CONFIG,
-    { ...options, strategy: "first-match" },
-  );
+};
 
+/**
+ * Convert a config-library result into the extension's debug-notification form.
+ */
+function withDebugMessages(
+  config: DeferModalConfig,
+  sources: string[],
+  diagnostics: string[],
+): ConfigLoadResult {
   if (!config.debug) {
     return { config, debugMessages: [] };
   }
@@ -134,14 +127,67 @@ export function loadConfig(options?: ConfigLocationOptions): {
 }
 
 /**
+ * Load global configuration only. This is safe before a session context exists.
+ */
+export function loadGlobalConfig(
+  options?: Omit<ConfigLocationOptions, "includeProject">,
+): ConfigLoadResult {
+  const { config, sources, diagnostics } = loadConfigFile<DeferModalConfig>(
+    EXTENSION_ID,
+    DEFAULT_CONFIG,
+    { ...options, includeProject: false, strategy: "first-match" },
+  );
+  return withDebugMessages(config, sources, diagnostics);
+}
+
+/**
+ * Load configuration with project trust awareness.
+ * Global configuration is always loaded; project configuration is only
+ * considered when the project is trusted (ctx.isProjectTrusted() returns true).
+ *
+ * This function should be called from session_start where ctx is available.
+ */
+export function loadConfigWithTrust(ctx: ExtensionContext): ConfigLoadResult {
+  const { config, sources, diagnostics } = loadConfigFile<DeferModalConfig>(
+    EXTENSION_ID,
+    DEFAULT_CONFIG,
+    {
+      cwd: ctx.cwd,
+      includeProject: ctx.isProjectTrusted(),
+      strategy: "first-match",
+    },
+  );
+  return withDebugMessages(config, sources, diagnostics);
+}
+
+/**
  * Create a config reader that can be used by the typing tracker.
  * This allows the config to be refreshed and read consistently.
  */
 export class ConfigStore {
   private config: DeferModalConfig;
+  private ctx: ExtensionContext | null = null;
 
   constructor(initialConfig: Partial<DeferModalConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...initialConfig };
+  }
+
+  /**
+   * Initialize the store with a session context for trust-aware config loading.
+   * Must be called before reload() to enable project-tier config loading.
+   */
+  init(ctx: ExtensionContext): void {
+    this.ctx = ctx;
+  }
+
+  /**
+   * Clear the session context and remove any project-derived configuration.
+   */
+  clearContext(): ConfigDebugMessage[] {
+    this.ctx = null;
+    const { config, debugMessages } = loadGlobalConfig();
+    this.config = config;
+    return debugMessages;
   }
 
   /**
@@ -157,12 +203,20 @@ export class ConfigStore {
   update(newConfig: Partial<DeferModalConfig>): void {
     this.config = { ...this.config, ...newConfig };
   }
-  
+
   /**
    * Reload configuration from file.
+   * If a context was set via init(), project config is only loaded when the project is trusted.
+   * Global config is always loaded.
    */
   reload(): ConfigDebugMessage[] {
-    const { config, debugMessages } = loadConfig();
+    if (this.ctx) {
+      const { config, debugMessages } = loadConfigWithTrust(this.ctx);
+      this.config = config;
+      return debugMessages;
+    }
+    // Before a session context exists, only the global tier is allowed.
+    const { config, debugMessages } = loadGlobalConfig();
     this.config = config;
     return debugMessages;
   }

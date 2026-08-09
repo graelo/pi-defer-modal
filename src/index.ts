@@ -18,9 +18,9 @@ import type {
 import {
   ConfigStore,
   type ConfigDebugMessage,
-  DEFAULT_CONFIG,
   EXTENSION_ID,
-  loadConfig,
+  loadConfigWithTrust,
+  loadGlobalConfig,
 } from "./config";
 import { TypingTracker } from "./typing-tracker";
 
@@ -200,9 +200,10 @@ class DeferredUI {
  * This extension intercepts UI modal calls and defers them while the user is typing.
  */
 export default function piDeferModalExtension(pi: ExtensionAPI): void {
-  // Load configuration from file and create store
-  const { config: loadedConfig, debugMessages } = loadConfig();
-  const config = new ConfigStore(loadedConfig);
+  // Global configuration is safe to load before a session exists. Project
+  // configuration is loaded only in session_start, where trust is available.
+  const { config: globalConfig } = loadGlobalConfig();
+  const config = new ConfigStore(globalConfig);
 
   /**
    * Display a debug notification when debug mode is enabled.
@@ -240,9 +241,18 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
 
   // Patch the UI methods on session start
   pi.on("session_start", (event, ctx) => {
+    // Initialize config store with context for trust-aware loading
+    config.init(ctx);
+
+    // Load configuration with trust awareness
+    const { config: loadedConfig, debugMessages } = loadConfigWithTrust(ctx);
+    // Update config store with loaded config
+    config.update(loadedConfig);
+
     if (isPatched) {
       // Already patched - just update the tracker context
       typingTracker.start(ctx);
+      notifyDebugMessages(ctx, debugMessages);
       return;
     }
 
@@ -273,6 +283,7 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
     typingTracker.stop();
     isPatched = false;
     notifyDebug(ctx, `[${EXTENSION_ID}] Modal deferral extension deactivated`);
+    config.clearContext();
   });
 
   // Notify the tracker when user submits input
@@ -321,6 +332,8 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
   pi.registerCommand("defer-modal-reload", {
     description: "Reload modal deferral configuration from file",
     handler: async (args: string, ctx: ExtensionContext) => {
+      // Ensure config store has context for trust-aware reloading
+      config.init(ctx);
       const reloadedDebugMessages = config.reload();
       const currentConfig = config.current();
       notifyDebugMessages(ctx, reloadedDebugMessages);
