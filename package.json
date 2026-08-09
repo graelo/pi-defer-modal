@@ -12,14 +12,16 @@
     "url": "https://github.com/graelo/pi-defer-modal.git"
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
-    "@graelo/pi-ext-config": "^0.1.0"
+    "@graelo/pi-ext-config": "^0.2.0"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "*",
     "@types/node": "^22",
+    "tsx": "^4.23.9",
     "typescript": "^6.0.3"
   },
   "pi": {
