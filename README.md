@@ -35,7 +35,7 @@ should), but the UI presentation is delayed until you're ready.
 ### From npm (recommended)
 
 ```bash
-pnpm add pi-defer-modal
+pi install npm:@graelo/pi-defer-modal
 ```
 
 ### Manual installation
@@ -155,7 +155,7 @@ just like un-wrapped `select`/`confirm`/`input` would.
 
 ## Compatibility
 
-- Works with Pi v0.2.0 and later
+- Works with Pi v0.2.0 and later, including Pi 1.0.x
 - Requires `@graelo/pi-ext-config@^0.2.0` or later for trust-aware config
     resolution
 - Compatible with all extensions that use standard UI modal methods
