@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-06
+
+### Changed
+
+- Declare `@earendil-works/pi-coding-agent` as a peer dependency, matching Pi's
+  package guidelines: Pi supplies the host package at runtime, so no version
+  constraint is imposed on the host.
+- Refresh the development dependency on `@earendil-works/pi-coding-agent` to
+  v1.0.4 in the lockfile; type checking and tests pass against Pi 1.0.x.
+
+### Fixed
+
+- Correct the README's npm installation command to
+  `pi install npm:@graelo/pi-defer-modal`.
+
 ## [0.2.0] - 2026-08-09
 
 ### Added
@@ -68,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   built-in defaults.
 - Commands: `/defer-modal-toggle`, `/defer-modal-config`, `/defer-modal-reload`.
 
+[0.2.1]: https://github.com/graelo/pi-defer-modal/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/graelo/pi-defer-modal/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/graelo/pi-defer-modal/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/graelo/pi-defer-modal/compare/v0.1.2...v0.1.3
