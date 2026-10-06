@@ -18,6 +18,9 @@
   "dependencies": {
     "@graelo/pi-ext-config": "^0.2.0"
   },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "*",
     "@types/node": "^22",
