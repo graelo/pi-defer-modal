@@ -68,10 +68,20 @@ Create a `config.json` file in the extension directory:
 | `enabled` | boolean | `false` | Enable or disable modal deferral |
 | `modalTypes` | string[] | `["select", "confirm", "input", "custom"]` | Which modal types to defer |
 | `quietMs` | number | `1500` | Milliseconds of inactivity before showing deferred modals |
-| `maxDeferMs` | number | `30000` | Maximum time to defer a modal (prevents hanging) |
+| `maxDeferMs` | number \| null | `30000` | Maximum time to defer a modal (prevents hanging). Set to `null` or `0` to disable the cap entirely |
 | `showStatusIndicator` | boolean | `true` | Show a status indicator when modals are deferred |
 | `statusText` | string | `"⏸ modal pending — pause to review"` | Text to show in the status indicator |
 | `debug` | boolean | `false` | Show extension diagnostic notifications |
+
+To disable the total deferral timer entirely (so a deferred modal waits
+however long it takes for you to pause typing), set `maxDeferMs` to `null`:
+
+```json
+{
+  "enabled": true,
+  "maxDeferMs": null
+}
+```
 
 ### Configuration Locations
 
@@ -132,7 +142,8 @@ Reload configuration from file (useful after editing config.json).
    extension waits until:
    - You pause typing for `quietMs` milliseconds, OR
    - You submit your input (press Enter), OR
-   - The maximum deferral time (`maxDeferMs`) elapses
+   - The maximum deferral time (`maxDeferMs`) elapses — unless the cap is
+     disabled by setting `maxDeferMs` to `null` or `0`
 4. **Status Indicator**: While waiting, an optional status message shows that
    modals are pending
 

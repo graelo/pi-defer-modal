@@ -80,6 +80,16 @@ test("ConfigStore.getMaxDeferMs returns maxDeferMs from config", () => {
   assert.equal(store.getMaxDeferMs(), 60000);
 });
 
+test("ConfigStore.getMaxDeferMs returns null when the deferral cap is disabled", () => {
+  const store = new ConfigStore({ maxDeferMs: null });
+  assert.equal(store.getMaxDeferMs(), null);
+});
+
+test("ConfigStore.getMaxDeferMs treats 0 as a disabled deferral cap", () => {
+  const store = new ConfigStore({ maxDeferMs: 0 });
+  assert.equal(store.getMaxDeferMs(), 0);
+});
+
 test("ConfigStore.shouldShowStatus returns showStatusIndicator from config", () => {
   const store = new ConfigStore({ showStatusIndicator: false });
   assert.equal(store.shouldShowStatus(), false);

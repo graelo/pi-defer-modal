@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `maxDeferMs` (the total deferral timer that forces a deferred modal to
+  appear even if the user never stops typing) is now optional: set it to
+  `null` or `0` in the extension config to disable the cap entirely. With the
+  cap disabled, deferred modals wait indefinitely until the user pauses
+  typing, submits their input, or empties the editor. The default remains
+  30000ms.
+
 ## [0.2.1] - 2026-10-06
 
 ### Changed
