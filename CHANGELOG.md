@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-06
 
 ### Changed
 
@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cap disabled, deferred modals wait indefinitely until the user pauses
   typing, submits their input, or empties the editor. The default remains
   30000ms.
+- Refresh the development dependency on `@earendil-works/pi-coding-agent` to
+  Pi 1.x (`^1.1.0`) in `package.json` and the lockfile.
 
 ## [0.2.1] - 2026-10-06
 
