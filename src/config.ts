@@ -35,9 +35,11 @@ export interface DeferModalConfig {
    * Maximum total deferral time in milliseconds.
    * The modal will appear after this time even if the user never stops typing.
    * This prevents "block the tool" from becoming "hang the tool".
+   * Set to `null` (or `0`) to disable the cap entirely and wait indefinitely
+   * for the user to pause typing.
    * Default: 30000ms (30 seconds)
    */
-  maxDeferMs: number;
+  maxDeferMs: number | null;
 
   /**
    * Show a status indicator when modals are being deferred.
@@ -70,6 +72,18 @@ export const DEFAULT_CONFIG: DeferModalConfig = {
   statusText: "⏸ modal pending — pause to review",
   debug: false,
 };
+
+/**
+ * Whether the total deferral cap is enabled. Any `null` (or non-positive)
+ * value means "no cap": deferred modals then wait indefinitely for the user
+ * to pause typing. Shared by the tracker (enforcement) and the config
+ * command (display) so both treat out-of-contract values the same way.
+ */
+export function hasDeferCap(
+  maxDeferMs: number | null | undefined,
+): maxDeferMs is number {
+  return maxDeferMs != null && maxDeferMs > 0;
+}
 
 /**
  * Extension ID for this extension.
@@ -238,9 +252,10 @@ export class ConfigStore {
   }
 
   /**
-   * Get the maximum defer time in milliseconds.
+   * Get the maximum defer time in milliseconds, or `null` when the
+   * deferral cap is disabled.
    */
-  getMaxDeferMs(): number {
+  getMaxDeferMs(): number | null {
     return this.current().maxDeferMs;
   }
 

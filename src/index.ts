@@ -19,6 +19,7 @@ import {
   ConfigStore,
   type ConfigDebugMessage,
   EXTENSION_ID,
+  hasDeferCap,
   loadConfigWithTrust,
   loadGlobalConfig,
 } from "./config";
@@ -320,7 +321,7 @@ export default function piDeferModalExtension(pi: ExtensionAPI): void {
         `  Enabled: ${currentConfig.enabled}\n` +
         `  Modal types: ${currentConfig.modalTypes.join(", ")}\n` +
         `  Quiet time: ${currentConfig.quietMs}ms\n` +
-        `  Max defer: ${currentConfig.maxDeferMs}ms\n` +
+        `  Max defer: ${hasDeferCap(currentConfig.maxDeferMs) ? `${currentConfig.maxDeferMs}ms` : "disabled (no cap)"}\n` +
         `  Show status: ${currentConfig.showStatusIndicator}\n` +
         `  Status text: "${currentConfig.statusText}"\n` +
         `  Debug: ${currentConfig.debug}`

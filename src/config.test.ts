@@ -15,6 +15,7 @@ import { join } from "node:path";
 import {
   ConfigStore,
   DEFAULT_CONFIG,
+  hasDeferCap,
   loadConfigWithTrust,
 } from "./config";
 
@@ -78,6 +79,25 @@ test("ConfigStore.getQuietMs returns quietMs from config", () => {
 test("ConfigStore.getMaxDeferMs returns maxDeferMs from config", () => {
   const store = new ConfigStore({ maxDeferMs: 60000 });
   assert.equal(store.getMaxDeferMs(), 60000);
+});
+
+test("ConfigStore.getMaxDeferMs returns null when the deferral cap is disabled", () => {
+  const store = new ConfigStore({ maxDeferMs: null });
+  assert.equal(store.getMaxDeferMs(), null);
+});
+
+test("ConfigStore.getMaxDeferMs treats 0 as a disabled deferral cap", () => {
+  const store = new ConfigStore({ maxDeferMs: 0 });
+  assert.equal(store.getMaxDeferMs(), 0);
+});
+
+test("hasDeferCap is true only for positive values", () => {
+  assert.equal(hasDeferCap(30000), true);
+  assert.equal(hasDeferCap(1), true);
+  assert.equal(hasDeferCap(null), false);
+  assert.equal(hasDeferCap(undefined), false);
+  assert.equal(hasDeferCap(0), false);
+  assert.equal(hasDeferCap(-1), false);
 });
 
 test("ConfigStore.shouldShowStatus returns showStatusIndicator from config", () => {
