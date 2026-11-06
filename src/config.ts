@@ -74,6 +74,18 @@ export const DEFAULT_CONFIG: DeferModalConfig = {
 };
 
 /**
+ * Whether the total deferral cap is enabled. Any `null` (or non-positive)
+ * value means "no cap": deferred modals then wait indefinitely for the user
+ * to pause typing. Shared by the tracker (enforcement) and the config
+ * command (display) so both treat out-of-contract values the same way.
+ */
+export function hasDeferCap(
+  maxDeferMs: number | null | undefined,
+): maxDeferMs is number {
+  return maxDeferMs != null && maxDeferMs > 0;
+}
+
+/**
  * Extension ID for this extension.
  */
 export const EXTENSION_ID = "pi-defer-modal";

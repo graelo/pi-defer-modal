@@ -11,7 +11,7 @@ import type {
   TerminalInputHandler,
 } from "@earendil-works/pi-coding-agent";
 
-import { ConfigStore, STATUS_KEY } from "./config";
+import { ConfigStore, hasDeferCap, STATUS_KEY } from "./config";
 
 /**
  * Poll granularity (ms) for the debounce loop.
@@ -134,11 +134,13 @@ export class TypingTracker {
         if (this.isEditorEmpty(ctx)) return;
         const sinceInput = this.now() - this.lastInputAt;
         if (sinceInput >= quietMs) return;
-        // `null` (or 0) disables the total deferral cap: the wait then only
-        // ends on a typing pause, submit, or an emptied editor.
-        const maxDeferMs = config.maxDeferMs;
-        if (maxDeferMs != null && maxDeferMs > 0) {
-          if (this.now() - startedAt >= maxDeferMs) return;
+        // A disabled cap (`null` or non-positive) means the wait only ends
+        // on a typing pause, submit, or an emptied editor.
+        if (
+          hasDeferCap(config.maxDeferMs) &&
+          this.now() - startedAt >= config.maxDeferMs
+        ) {
+          return;
         }
         await this.sleep(Math.min(quietMs - sinceInput, POLL_INTERVAL_MS));
       }
